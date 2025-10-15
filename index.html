@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3 Charts Dashboard - TV Power Consumption</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f4ff 0%, #faf7ff 50%, #fff0f7 100%);
+            min-height: 100vh;
+            font-weight: 400;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 30px;
+            margin-bottom: 40px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.8em;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p {
+            margin: 12px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+            text-align: center;
+            letter-spacing: -0.01em;
+        }
+        
+        .chart-description {
+            font-size: 0.85em;
+            color: #6b7280;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+        
+        .chart {
+            width: 100%;
+            height: 400px;
+            min-height: 350px;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                max-width: 800px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+            
+            .chart {
+                height: 350px;
+            }
+            
+            body {
+                padding: 16px;
+            }
+            
+            .chart-container {
+                padding: 20px;
+            }
+        }
+        
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            pointer-events: none;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Chart-specific styles */
+        .scatter-dot {
+            transition: all 0.2s ease;
+        }
+        
+        .bar {
+            transition: all 0.3s ease;
+        }
+        
+        .line {
+            fill: none;
+            stroke-width: 3;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+        
+        .line-qld { stroke: #ff8a8a; }
+        .line-nsw { stroke: #7dd3fc; }
+        .line-vic { stroke: #a78bfa; }
+        .line-sa { stroke: #fbbf24; }
+        .line-avg { stroke: #374151; stroke-width: 4; }
+        
+        .axis {
+            font-size: 11px;
+            font-weight: 500;
+            color: #6b7280;
+        }
+        
+        .axis-title {
+            font-size: 13px;
+            font-weight: 600;
+            fill: #374151;
+        }
+        
+        .legend {
+            font-size: 11px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>D3 Charts Dashboard</h1>
+        <p>TV power consumption</p>
+    </div>
+    
+    <div class="dashboard">
+        <div class="chart-container">
+            <div class="chart-title">Energy Consumption vs Star Rating</div>
+            <div class="chart-description">
+                Scatter plot showing the relationship between energy consumption and star rating across all TV sizes and brands.
+            </div>
+            <div id="scatter-chart" class="chart"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Average Spot Power Prices (1998-2024)</div>
+            <div class="chart-description">
+                Line chart displaying power price trends over time by state, highlighting market volatility and regional differences.
+            </div>
+            <div id="line-chart" class="chart"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Energy Consumption by Screen Technology (55" TVs)</div>
+            <div class="chart-description">
+                Bar chart comparing average energy consumption across different screen technologies for 55-inch televisions.
+            </div>
+            <div id="bar-chart" class="chart"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Screen Technology Market Share (All Sizes)</div>
+            <div class="chart-description">
+                Donut chart showing the distribution of screen technologies across all TV sizes, with energy consumption data.
+            </div>
+            <div id="donut-chart" class="chart"></div>
+        </div>
+    </div>
+    
+    <!-- Load chart scripts -->
+    <script src="scatter-chart.js"></script>
+    <script src="line-chart.js"></script>
+    <script src="bar-chart.js"></script>
+    <script src="donut-chart.js"></script>
+</body>
+</html>
